@@ -611,6 +611,11 @@ static int pmw3610_report_data(const struct device *dev) {
         set_cpi_if_needed(dev, CONFIG_PMW3610_SNIPE_CPI);
         dividor = CONFIG_PMW3610_SNIPE_CPI_DIVIDOR;
         break;
+    case ARROW:
+        set_cpi_if_needed(dev, CONFIG_PMW3610_ARROW_CPI);
+        dividor = CONFIG_PMW3610_ARROW_CPI_DIVIDOR;
+        break;
+
     default:
         return -ENOTSUP;
     }
@@ -693,10 +698,20 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-        if (input_mode != SCROLL) {
-            input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
-            input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
-        } else {
+    if (input_mode == MOVE) {
+        input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
+        input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+    } else if (input_mode == ARROW) {
+        if (abs(x) > ARROW_TICK) {
+            input_report_key(dev, x > 0 ? INPUT_KEY_RIGHT : INPUT_KEY_LEFT, 1, K_FOREVER);
+            input_report_key(dev, x > 0 ? INPUT_KEY_RIGHT : INPUT_KEY_LEFT, 0, K_FOREVER);
+        }
+        if (abs(y) > ARROW_TICK) {
+            input_report_key(dev, y > 0 ? INPUT_KEY_DOWN : INPUT_KEY_UP, 1, K_FOREVER);
+            input_report_key(dev, y > 0 ? INPUT_KEY_DOWN : INPUT_KEY_UP, 0, K_FOREVER);
+        }
+    } else {
+
             data->scroll_delta_x += x;
             data->scroll_delta_y += y;
             if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
