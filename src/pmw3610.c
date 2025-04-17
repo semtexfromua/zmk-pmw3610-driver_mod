@@ -574,6 +574,11 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
             return SNIPE;
         }
     }
+    for (size_t i = 0; i < config->arrow_layers_len; i++) {
+        if (curr_layer == config->arrow_layers[i]) {
+            return ARROW;
+        }
+    }
     return MOVE;
 }
 
