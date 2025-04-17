@@ -13,13 +13,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
-#include <zephyr/logging/log.h>
-
-#include <zmk/events/keycode_state_changed.h>
 #include <zmk/keymap.h>
-#include <zmk/event_manager.h>
-#include <zmk/keycodes.h>
+#include "pmw3610.h"
 
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
 //////// Sensor initialization steps definition //////////
@@ -577,11 +574,6 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
             return SNIPE;
         }
     }
-    for (size_t i = 0; i < config->arrow_layers_len; i++) {
-    if (curr_layer == config->arrow_layers[i]) {
-        return ARROWS;
-    }
-}
     return MOVE;
 }
 
@@ -614,44 +606,6 @@ static int pmw3610_report_data(const struct device *dev) {
         set_cpi_if_needed(dev, CONFIG_PMW3610_SNIPE_CPI);
         dividor = CONFIG_PMW3610_SNIPE_CPI_DIVIDOR;
         break;
-    case ARROWS:
-    set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);  // можна лишити як є
-    if (input_mode_changed) {
-        data->scroll_delta_x = 0;
-        data->scroll_delta_y = 0;
-    }
-
-    data->scroll_delta_x += x;
-    data->scroll_delta_y += y;
-
-    if (abs(data->scroll_delta_x) > CONFIG_PMW3610_ARROW_TICK) {
-        uint16_t keycode = data->scroll_delta_x > 0 ? HID_USAGE_KEY_RIGHT_ARROW : HID_USAGE_KEY_LEFT_ARROW;
-        struct keycode_state_changed *evt_press = new_keycode_state_changed_event();
-        evt_press->keycode = keycode;
-        evt_press->state = true;
-        ZMK_EVENT_RAISE(evt_press);
-
-        struct keycode_state_changed *evt_release = new_keycode_state_changed_event();
-        evt_release->keycode = keycode;
-        evt_release->state = false;
-        ZMK_EVENT_RAISE(evt_release);
-        data->scroll_delta_x = 0;
-    }
-
-    if (abs(data->scroll_delta_y) > CONFIG_PMW3610_ARROW_TICK) {
-        uint16_t keycode = data->scroll_delta_y > 0 ? HID_USAGE_KEY_DOWN_ARROW : HID_USAGE_KEY_UP_ARROW;
-        struct keycode_state_changed *evt_press = new_keycode_state_changed_event();
-        evt_press->keycode = keycode;
-        evt_press->state = true;
-        ZMK_EVENT_RAISE(evt_press);
-        
-        struct keycode_state_changed *evt_release = new_keycode_state_changed_event();
-        evt_release->keycode = keycode;
-        evt_release->state = false;
-        ZMK_EVENT_RAISE(evt_release);
-        data->scroll_delta_y = 0;
-    }
-    break;
     default:
         return -ENOTSUP;
     }
@@ -879,8 +833,6 @@ static int pmw3610_init(const struct device *dev) {
         .scroll_layers_len = DT_PROP_LEN(DT_DRV_INST(n), scroll_layers),                           \
         .snipe_layers = snipe_layers##n,                                                           \
         .snipe_layers_len = DT_PROP_LEN(DT_DRV_INST(n), snipe_layers),                             \
-        .arrow_layers = arrow_layers##n,                                                           \
-        .arrow_layers_len = DT_PROP_LEN(DT_DRV_INST(n), arrow_layers),                             \
     };                                                                                             \
                                                                                                    \
     DEVICE_DT_INST_DEFINE(n, pmw3610_init, NULL, &data##n, &config##n, POST_KERNEL,                \
