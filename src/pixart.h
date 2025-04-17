@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-enum pixart_input_mode { MOVE = 0, SCROLL, SNIPE };
+enum pixart_input_mode { MOVE = 0, SCROLL, SNIPE, ARROW };
 
 /* device data structure */
 struct pixart_data {
