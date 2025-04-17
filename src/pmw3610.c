@@ -583,6 +583,10 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
     return MOVE;
 }
 
+static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct device *dev,
+                                         int16_t x, int16_t y);
+
+
 static int pmw3610_report_data(const struct device *dev) {
     struct pixart_data *data = dev->data;
     uint8_t buf[PMW3610_BURST_SIZE];
