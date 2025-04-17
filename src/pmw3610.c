@@ -840,15 +840,15 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
         }
 } else if (input_mode == ARROW) {
         if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
-            zmk_hid_press(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHTARROW : HID_USAGE_KEY_KEYBOARD_LEFTARROW);
+            zmk_hid_keyboard_press(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHTARROW : HID_USAGE_KEY_KEYBOARD_LEFTARROW);
             k_msleep(10);
-            zmk_hid_release(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHTARROW : HID_USAGE_KEY_KEYBOARD_LEFTARROW);
+            zmk_hid_keyboard_release(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHTARROW : HID_USAGE_KEY_KEYBOARD_LEFTARROW);
         }
-        
+    
         if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
-            zmk_hid_press(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWNARROW : HID_USAGE_KEY_KEYBOARD_UPARROW);
+            zmk_hid_keyboard_press(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWNARROW : HID_USAGE_KEY_KEYBOARD_UPARROW);
             k_msleep(10);
-            zmk_hid_release(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWNARROW : HID_USAGE_KEY_KEYBOARD_UPARROW);
+            zmk_hid_keyboard_release(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWNARROW : HID_USAGE_KEY_KEYBOARD_UPARROW);
         }
     }
 }
