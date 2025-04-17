@@ -14,7 +14,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
 #include <zmk/hid.h>
-#include <zmk/keycode.h>
+#include <zmk/keymap.h>
 
 
 #include "pmw3610.h"
