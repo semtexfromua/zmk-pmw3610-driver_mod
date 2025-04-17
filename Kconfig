@@ -20,6 +20,11 @@ config PMW3610_SMART_ALGORITHM
     Enable the integration of the smart algorithm as the datasheet implementation.
     The algorithm is used to extend the tracking acrocss a wider range of surfaces
     such as graniles and tiles.
+config PMW3610_ARROW_TICK
+  int "PMW3610 tick threshold for arrow key emulation"
+  default 10
+  help
+    Number of accumulated deltas required to trigger an arrow keypress.
 
 config PMW3610_CPI
     int "PMW3610's default CPI"
