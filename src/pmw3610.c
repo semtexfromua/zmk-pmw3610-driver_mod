@@ -844,6 +844,7 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             zmk_hid_press(keycode);
             k_msleep(10);
             zmk_hid_release(keycode);
+            zmk_endpoints_send_report();
         }
     
         if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
@@ -851,6 +852,7 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             zmk_hid_press(keycode);
             k_msleep(10);
             zmk_hid_release(keycode);
+            zmk_endpoints_send_report();
         }
     }
 }
