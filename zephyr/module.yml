@@ -3,3 +3,5 @@ build:
   kconfig: Kconfig
   settings:
     dts_root: .
+    extra_include_dirs:
+      - ${ZMK_BASE}/include
