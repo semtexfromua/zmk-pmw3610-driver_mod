@@ -14,13 +14,13 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
 #include <zmk/keymap.h>
+#include <zmk/hid.h>
 
 #include "pmw3610.h"
 
 #include <zephyr/logging/log.h>
 
 // HID keycodes для стрілок
-#define default_keypress_config ((struct keypress_config){0, false})
 
 #define KEY_RIGHT 0x4F
 #define KEY_LEFT  0x50
@@ -838,17 +838,17 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_x = 0;
             data->scroll_delta_y = 0;
         }
-    } else if (input_mode == ARROW) {
-        int64_t now = k_uptime_get();
-    
+} else if (input_mode == ARROW) {
         if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, now, &default_keypress_config);
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, now, &default_keypress_config);
+            zmk_hid_press(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW : HID_USAGE_KEY_KEYBOARD_LEFT_ARROW);
+            k_msleep(10);
+            zmk_hid_release(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW : HID_USAGE_KEY_KEYBOARD_LEFT_ARROW);
         }
     
         if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, now, &default_keypress_config);
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, now, &default_keypress_config);
+            zmk_hid_press(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWN_ARROW : HID_USAGE_KEY_KEYBOARD_UP_ARROW);
+            k_msleep(10);
+            zmk_hid_release(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWN_ARROW : HID_USAGE_KEY_KEYBOARD_UP_ARROW);
         }
     }
 }
