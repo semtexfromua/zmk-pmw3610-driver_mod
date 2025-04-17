@@ -837,15 +837,16 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
     } else if (input_mode == ARROW) {
+        int64_t now = k_uptime_get();
+    
         if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
-            int64_t now = k_uptime_get();
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, now);
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, now);
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, now, NULL);
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, now, NULL);
         }
+    
         if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
-            int64_t now = k_uptime_get();
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, now);
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, now);
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, now, NULL);
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, now, NULL);
         }
     }
 }
