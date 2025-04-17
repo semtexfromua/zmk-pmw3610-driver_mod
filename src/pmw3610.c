@@ -841,8 +841,9 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
     } else if (input_mode == ARROW) {
-        input_report_key(dev, KEY_RIGHT, 1, true, K_FOREVER); // Натискання клавіші
-        input_report_key(dev, KEY_RIGHT, 0, true, K_FOREVER);
+        input_report_key(dev, INPUT_KEY_RIGHT, 1, true, K_FOREVER); // press
+        k_msleep(10);
+        input_report_key(dev, INPUT_KEY_RIGHT, 0, true, K_FOREVER); // release
     }
 }
 
