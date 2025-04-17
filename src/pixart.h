@@ -59,6 +59,8 @@ struct pixart_config {
     int32_t *scroll_layers;
     size_t snipe_layers_len;
     int32_t *snipe_layers;
+    size_t arrow_layers_len;
+    int32_t *arrow_layers;
 };
 
 #ifdef __cplusplus
