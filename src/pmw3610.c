@@ -13,11 +13,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
-#include <zmk/hid_usage.h>
-#include "pmw3610.h"
-
-
 #include <zephyr/logging/log.h>
+
+#include <zmk/events/keycode_state_changed.h>
+#include <zmk/keymap.h>
+#include <zmk/event_manager.h>
+#include <zmk/keycodes.h>
+
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
 //////// Sensor initialization steps definition //////////
@@ -624,15 +626,29 @@ static int pmw3610_report_data(const struct device *dev) {
 
     if (abs(data->scroll_delta_x) > CONFIG_PMW3610_ARROW_TICK) {
         uint16_t keycode = data->scroll_delta_x > 0 ? HID_USAGE_KEY_RIGHT_ARROW : HID_USAGE_KEY_LEFT_ARROW;
-        zmk_hid_keyboard_press(keycode);
-        zmk_hid_keyboard_release(keycode);
+        struct keycode_state_changed *evt_press = new_keycode_state_changed_event();
+        evt_press->keycode = keycode;
+        evt_press->state = true;
+        ZMK_EVENT_RAISE(evt_press);
+
+        struct keycode_state_changed *evt_release = new_keycode_state_changed_event();
+        evt_release->keycode = keycode;
+        evt_release->state = false;
+        ZMK_EVENT_RAISE(evt_release);
         data->scroll_delta_x = 0;
     }
 
     if (abs(data->scroll_delta_y) > CONFIG_PMW3610_ARROW_TICK) {
         uint16_t keycode = data->scroll_delta_y > 0 ? HID_USAGE_KEY_DOWN_ARROW : HID_USAGE_KEY_UP_ARROW;
-        zmk_hid_keyboard_press(keycode);
-        zmk_hid_keyboard_release(keycode);
+        struct keycode_state_changed *evt_press = new_keycode_state_changed_event();
+        evt_press->keycode = keycode;
+        evt_press->state = true;
+        ZMK_EVENT_RAISE(evt_press);
+        
+        struct keycode_state_changed *evt_release = new_keycode_state_changed_event();
+        evt_release->keycode = keycode;
+        evt_release->state = false;
+        ZMK_EVENT_RAISE(evt_release);
         data->scroll_delta_y = 0;
     }
     break;
