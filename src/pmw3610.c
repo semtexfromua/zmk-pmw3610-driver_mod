@@ -16,6 +16,7 @@
 #include <zmk/hid.h>
 #include <zmk/keymap.h>
 #include <zmk/behavior.h>
+#include <dt-bindings/zmk/keys.h>
 
 
 #include "pmw3610.h"
