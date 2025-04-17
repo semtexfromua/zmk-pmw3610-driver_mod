@@ -840,12 +840,13 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_x = 0;
             data->scroll_delta_y = 0;
         }
-        if (input_mode == ARROW) {
-                zmk_hid_press(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
-                k_msleep(10);
-                zmk_hid_release(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
+    } else if (input_mode == ARROW) {
+        zmk_hid_press(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
+        k_msleep(10);
+        zmk_hid_release(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
     }
 }
+
 
 
 #define PMW3610_DEFINE(n)                                                                          \
