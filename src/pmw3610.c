@@ -614,6 +614,30 @@ static int pmw3610_report_data(const struct device *dev) {
         set_cpi_if_needed(dev, CONFIG_PMW3610_SNIPE_CPI);
         dividor = CONFIG_PMW3610_SNIPE_CPI_DIVIDOR;
         break;
+    case ARROWS:
+    set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);  // можна лишити як є
+    if (input_mode_changed) {
+        data->scroll_delta_x = 0;
+        data->scroll_delta_y = 0;
+    }
+
+    data->scroll_delta_x += x;
+    data->scroll_delta_y += y;
+
+    if (abs(data->scroll_delta_x) > CONFIG_PMW3610_ARROW_TICK) {
+        uint16_t keycode = data->scroll_delta_x > 0 ? HID_USAGE_KEY_RIGHT_ARROW : HID_USAGE_KEY_LEFT_ARROW;
+        zmk_hid_keyboard_press(keycode);
+        zmk_hid_keyboard_release(keycode);
+        data->scroll_delta_x = 0;
+    }
+
+    if (abs(data->scroll_delta_y) > CONFIG_PMW3610_ARROW_TICK) {
+        uint16_t keycode = data->scroll_delta_y > 0 ? HID_USAGE_KEY_DOWN_ARROW : HID_USAGE_KEY_UP_ARROW;
+        zmk_hid_keyboard_press(keycode);
+        zmk_hid_keyboard_release(keycode);
+        data->scroll_delta_y = 0;
+    }
+    break;
     default:
         return -ENOTSUP;
     }
