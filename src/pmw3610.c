@@ -574,6 +574,12 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
             return SNIPE;
         }
     }
+    for (size_t i = 0; i < config->arrow_layers_len; i++) {
+        if (curr_layer == config->arrow_layers[i]) {
+            return ARROW;
+        }
+    }
+
     return MOVE;
 }
 
@@ -688,27 +694,14 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-        if (input_mode != SCROLL) {
+        if (input_mode == MOVE || input_mode == SNIPE) {
             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
         } else {
-            data->scroll_delta_x += x;
-            data->scroll_delta_y += y;
-            if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
-                input_report_rel(dev, INPUT_REL_WHEEL,
-                                 data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
-                                 true, K_FOREVER);
-                data->scroll_delta_x = 0;
-                data->scroll_delta_y = 0;
-            } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
-                input_report_rel(dev, INPUT_REL_HWHEEL,
-                                 data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
-                                 true, K_FOREVER);
-                data->scroll_delta_x = 0;
-                data->scroll_delta_y = 0;
-            }
+            handle_scroll_or_arrow_input(data, dev, x, y);
         }
     }
+
 
     return err;
 }
@@ -811,8 +804,43 @@ static int pmw3610_init(const struct device *dev) {
     return err;
 }
 
+static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct device *dev,
+                                         int16_t x, int16_t y) {
+    enum pixart_input_mode input_mode = data->curr_mode;
+
+    if (input_mode == SCROLL) {
+        data->scroll_delta_x += x;
+        data->scroll_delta_y += y;
+
+        if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
+            input_report_rel(dev, INPUT_REL_WHEEL,
+                             data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
+                             true, K_FOREVER);
+            data->scroll_delta_x = 0;
+            data->scroll_delta_y = 0;
+        } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
+            input_report_rel(dev, INPUT_REL_HWHEEL,
+                             data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
+                             true, K_FOREVER);
+            data->scroll_delta_x = 0;
+            data->scroll_delta_y = 0;
+        }
+    } else if (input_mode == ARROW) {
+        if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, K_NO_WAIT);
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, K_NO_WAIT);
+        }
+        if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, K_NO_WAIT);
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, K_NO_WAIT);
+        }
+    }
+}
+
+
 #define PMW3610_DEFINE(n)                                                                          \
     static struct pixart_data data##n;                                                             \
+    static int32_t arrow_layers##n[] = DT_PROP(DT_DRV_INST(n), arrow_layers);                      \
     static int32_t scroll_layers##n[] = DT_PROP(DT_DRV_INST(n), scroll_layers);                    \
     static int32_t snipe_layers##n[] = DT_PROP(DT_DRV_INST(n), snipe_layers);                      \
     static const struct pixart_config config##n = {                                                \
@@ -833,6 +861,8 @@ static int pmw3610_init(const struct device *dev) {
         .scroll_layers_len = DT_PROP_LEN(DT_DRV_INST(n), scroll_layers),                           \
         .snipe_layers = snipe_layers##n,                                                           \
         .snipe_layers_len = DT_PROP_LEN(DT_DRV_INST(n), snipe_layers),                             \
+        .arrow_layers = arrow_layers##n,                                                           \
+        .arrow_layers_len = DT_PROP_LEN(DT_DRV_INST(n), arrow_layers),                             \
     };                                                                                             \
                                                                                                    \
     DEVICE_DT_INST_DEFINE(n, pmw3610_init, NULL, &data##n, &config##n, POST_KERNEL,                \
