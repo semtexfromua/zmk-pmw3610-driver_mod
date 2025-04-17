@@ -13,6 +13,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
+#include <zmk/keymap.h>
 #include "pmw3610.h"
 
 #include <zephyr/logging/log.h>
@@ -573,11 +574,6 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
             return SNIPE;
         }
     }
-    for (size_t i = 0; i < config->arrow_layers_len; i++) {
-        if (curr_layer == config->arrow_layers[i]) {
-            return ARROW;
-        }
-    }
     return MOVE;
 }
 
@@ -610,11 +606,6 @@ static int pmw3610_report_data(const struct device *dev) {
         set_cpi_if_needed(dev, CONFIG_PMW3610_SNIPE_CPI);
         dividor = CONFIG_PMW3610_SNIPE_CPI_DIVIDOR;
         break;
-    case ARROW:
-        set_cpi_if_needed(dev, CONFIG_PMW3610_ARROW_CPI);
-        dividor = CONFIG_PMW3610_ARROW_CPI_DIVIDOR;
-        break;
-
     default:
         return -ENOTSUP;
     }
@@ -697,20 +688,10 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-    if (input_mode == MOVE) {
-        input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
-        input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
-    } else if (input_mode == ARROW) {
-        if (abs(x) > ARROW_TICK) {
-            input_report_key(dev, x > 0 ? INPUT_KEY_RIGHT : INPUT_KEY_LEFT, 1, K_FOREVER);
-            input_report_key(dev, x > 0 ? INPUT_KEY_RIGHT : INPUT_KEY_LEFT, 0, K_FOREVER);
-        }
-        if (abs(y) > ARROW_TICK) {
-            input_report_key(dev, y > 0 ? INPUT_KEY_DOWN : INPUT_KEY_UP, 1, K_FOREVER);
-            input_report_key(dev, y > 0 ? INPUT_KEY_DOWN : INPUT_KEY_UP, 0, K_FOREVER);
-        }
-    } else {
-
+        if (input_mode != SCROLL) {
+            input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
+            input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+        } else {
             data->scroll_delta_x += x;
             data->scroll_delta_y += y;
             if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
@@ -852,8 +833,6 @@ static int pmw3610_init(const struct device *dev) {
         .scroll_layers_len = DT_PROP_LEN(DT_DRV_INST(n), scroll_layers),                           \
         .snipe_layers = snipe_layers##n,                                                           \
         .snipe_layers_len = DT_PROP_LEN(DT_DRV_INST(n), snipe_layers),                             \
-        .arrow_layers = arrow_layers##n,                                                           \
-        .arrow_layers_len = DT_PROP_LEN(DT_DRV_INST(n), arrow_layers),                             \
     };                                                                                             \
                                                                                                    \
     DEVICE_DT_INST_DEFINE(n, pmw3610_init, NULL, &data##n, &config##n, POST_KERNEL,                \
