@@ -841,7 +841,9 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
         if (input_mode == ARROW) {
-            send_keyboard_key(KEY_RIGHT_ARROW);
+                zmk_hid_press(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
+                k_msleep(10);
+                zmk_hid_release(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
     }
 }
 
