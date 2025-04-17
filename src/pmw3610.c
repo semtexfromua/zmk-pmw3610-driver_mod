@@ -840,13 +840,13 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
         int64_t now = k_uptime_get();
     
         if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, now, NULL);
-            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, now, NULL);
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, true, now, &default_keypress_config);
+            input_report_key(dev, x > 0 ? KEY_RIGHT : KEY_LEFT, false, now, &default_keypress_config);
         }
     
         if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, now, NULL);
-            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, now, NULL);
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, true, now, &default_keypress_config);
+            input_report_key(dev, y > 0 ? KEY_DOWN : KEY_UP, false, now, &default_keypress_config);
         }
     }
 }
