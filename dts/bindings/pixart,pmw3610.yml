@@ -18,6 +18,3 @@ properties:
   automouse-layer:
     type: int
     default: -1
-  arrow-layers:
-    type: array
-    default: []
