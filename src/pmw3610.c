@@ -15,6 +15,8 @@
 #include <zephyr/input/input.h>
 #include <zmk/keymap.h>
 #include <zmk/behavior.h>
+#include <zmk/input.h>
+
 #include "pmw3610.h"
 
 #include <zephyr/logging/log.h>
@@ -24,6 +26,8 @@
 #define KEY_LEFT  0x50
 #define KEY_DOWN  0x51
 #define KEY_UP    0x52
+
+extern const struct keypress_config default_keypress_config;
 
 LOG_MODULE_REGISTER(pmw3610, CONFIG_INPUT_LOG_LEVEL);
 
