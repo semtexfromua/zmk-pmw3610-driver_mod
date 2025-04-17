@@ -13,7 +13,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
-#include <zmk/keymap.h>
 #include <zmk/hid.h>
 #include <zmk/keycode.h>
 
@@ -842,10 +841,7 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
         if (input_mode == ARROW) {
-        LOG_DBG("Arrow test: Pressing right arrow");
-        struct zmk_hid_key_report report = {0};
-        zmk_hid_press(&report, HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
-        zmk_hid_release(&report, HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
+            send_keyboard_key(KEY_RIGHT_ARROW);
     }
 }
 
