@@ -18,7 +18,6 @@ extern "C" {
 #define T_SRX 1          /* 250 ns (rounded to 1 us) */
 #define T_SWX 30         /* SWW: 30 us, SWR: 20 us */
 #define T_BEXIT 1        /* 250 ns (rounded to 1us)*/
-#define ARROW_TICK 20
 
 /* Sensor registers (addresses) */
 #define PMW3610_REG_PRODUCT_ID 0x00
