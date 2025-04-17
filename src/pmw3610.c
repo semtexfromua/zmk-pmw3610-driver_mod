@@ -14,9 +14,6 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
 #include <zmk/keymap.h>
-#include <zmk/behavior.h>
-#include <zmk/endpoints.h>
-
 #include <zmk/hid.h>
 
 #include "pmw3610.h"
@@ -47,21 +44,6 @@ enum pmw3610_init_step {
 /* Timings (in ms) needed in between steps to allow each step finishes succussfully. */
 // - Since MCU is not involved in the sensor init process, i is allowed to do other tasks.
 //   Thus, k_sleep or delayed schedule can be used.
-static void press_arrow_key(uint32_t usage) {
-    struct zmk_behavior_binding binding = {
-        .behavior_dev = zmk_behavior_get_device("behavior_key_press"),
-        .param1 = usage,
-        .param2 = 0
-    };
-
-    if (binding.behavior_dev == NULL) {
-        return;
-    }
-
-    behavior_keymap_binding_pressed(&binding, 0, NULL);
-    k_msleep(10);
-    behavior_keymap_binding_released(&binding, 0, NULL);
-}
 
 static const int32_t async_init_delay[ASYNC_INIT_STEP_COUNT] = {
     [ASYNC_INIT_STEP_POWER_UP] = 10, // test shows > 5ms needed
@@ -858,12 +840,7 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
     if (input_mode == ARROW) {
-        if (abs(x) > CONFIG_PMW3610_SCROLL_TICK) {
-            press_arrow_key(x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHTARROW : HID_USAGE_KEY_KEYBOARD_LEFTARROW);
-        }
-        if (abs(y) > CONFIG_PMW3610_SCROLL_TICK) {
-            press_arrow_key(y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWNARROW : HID_USAGE_KEY_KEYBOARD_UPARROW);
-        }
+        press_arrow_key(HID_USAGE_KEY_KEYBOARD_RIGHTARROW);
     }
 }
 
