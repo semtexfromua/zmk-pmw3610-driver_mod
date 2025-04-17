@@ -15,6 +15,7 @@
 #include <zephyr/input/input.h>
 #include <zmk/hid.h>
 #include <zmk/keymap.h>
+#include <zmk/behavior.h>
 
 
 #include "pmw3610.h"
@@ -841,9 +842,27 @@ static void handle_scroll_or_arrow_input(struct pixart_data *data, const struct 
             data->scroll_delta_y = 0;
         }
     } else if (input_mode == ARROW) {
-        input_report_key(dev, INPUT_KEY_RIGHT, 1, true, K_FOREVER); // press
+        const struct device *behavior = zmk_behavior_get_binding("key_press");
+        if (!behavior) {
+            LOG_ERR("Failed to find key_press behavior");
+            return;
+        }
+
+        struct zmk_behavior_binding binding = {
+            .behavior_dev = "key_press",
+            .param1 = HID_USAGE_KEY_KEYBOARD_RIGHTARROW,
+            .param2 = 0,
+        };
+
+        struct zmk_behavior_binding_event event = {
+            .layer = zmk_keymap_highest_layer_active(),
+            .position = 0, // позиція може бути будь-якою, якщо не критична
+            .timestamp = k_uptime_get()
+        };
+
+        zmk_behavior_invoke_binding(&binding, event, true);
         k_msleep(10);
-        input_report_key(dev, INPUT_KEY_RIGHT, 0, true, K_FOREVER); // release
+        zmk_behavior_invoke_binding(&binding, event, false);
     }
 }
 
