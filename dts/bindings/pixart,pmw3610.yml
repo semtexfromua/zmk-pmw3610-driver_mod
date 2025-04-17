@@ -20,8 +20,4 @@ properties:
     default: -1
   arrow-layers:
     type: array
-    required: false
     default: []
-    description: |
-      Array of four layer indexes: [LEFT, RIGHT, UP, DOWN].
-      Used in ARROW mode to emulate directional key presses.
