@@ -13,7 +13,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
-#include <zmk/keymap.h>
 #include <zmk/hid.h>
 #include <zmk/hid_usage.h>
 #include "pmw3610.h"
