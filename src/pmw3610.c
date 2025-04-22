@@ -739,73 +739,84 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-        // Якщо поточний режим CARET
-#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
-        if (input_mode == CARET_MODE) { // Переконайтеся, що використовуєте CARET_MODE
+        // Перевіряємо поточний режим і надсилаємо відповідні звіти
+#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // Якщо підтримка ендпоінтів увімкнена
+        if (input_mode == CARET_MODE) {
+            // --- Початок логіки режиму CARET (надсилання КЛАВІШ) ---
             data->caret_delta_x += x; // Накопичуємо дельту
             data->caret_delta_y += y;
 
             // Перевіряємо поріг для руху по Y (вгору/вниз -> KC_UP/KC_DOWN)
             if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) { // Переконайтеся, що тут CONFIG_PMW3610_CARET_TICK
                 // Визначаємо напрямок і надсилаємо подію клавіші
-                if (data->caret_delta_y > 0) { // Рух вниз
-                     zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_DOWN_ARROW); // Zephyr HID usage
-                     zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                     k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                     zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(data->caret_delta_y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWN_ARROW : HID_USAGE_KEY_KEYBOARD_UP_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
+                k_msleep(1); // Можливо, потрібна дуже коротка затримка
+                zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
 
-                } else { // Рух вгору
-                     zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_UP_ARROW); // Zephyr HID usage
-                     zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                     k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                     zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
-                }
                 data->caret_delta_y = 0; // Скидаємо дельту по Y після спрацювання
-                data->caret_delta_x = 0; // Можливо, скидати X теж, щоб не спрацював одночасно
+                data->caret_delta_x = 0; // Скидаємо X теж, щоб не спрацював одночасно
 
-            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) { // Переконайтеся, що тут CONFIG_PMW3610_CARET_TICK
-                 // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
-                if (data->caret_delta_x > 0) { // Рух вправо
-                     zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Zephyr HID usage
-                     zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                     k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                     zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
-                } else { // Рух вліво
-                     zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_LEFT_ARROW); // Zephyr HID usage
-                     zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                     k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                     zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
-                }
+            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) { // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
+                 // Визначаємо напрямок і надсилаємо подію клавіші
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(data->caret_delta_x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW : HID_USAGE_KEY_KEYBOARD_LEFT_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
+                k_msleep(1); // Можливо, потрібна дуже коротка затримка
+                zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
+
                 data->caret_delta_x = 0; // Скидаємо дельту по X після спрацювання
-                data->caret_delta_y = 0; // Можливо, скидати Y теж
-            }
+                data->caret_delta_y = 0; // Скидаємо Y теж
 
-        } else // <--- Тут потрібен else, щоб відділити логіку CARET_MODE від іншої
-#endif // IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
-        { // Існуюча логіка для режимів MOVE, SCROLL, SNIPE (цей блок має бути після #endif)
-            if (input_mode != SCROLL) {
-                input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
-                input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
-            } else { // Логіка скролу
-               data->scroll_delta_x += x;
-               data->scroll_delta_y += y;
-               if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
-                   input_report_rel(dev, INPUT_REL_WHEEL,
-                                    data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
-                                    true, K_FOREVER);
-                   data->scroll_delta_x = 0;
-                   data->scroll_delta_y = 0;
-               } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
-                   input_report_rel(dev, INPUT_REL_HWHEEL,
-                                    data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
-                                    true, K_FOREVER);
-                   data->scroll_delta_x = 0;
-                   data->scroll_delta_y = 0;
-               }
             }
+            // --- Кінець логіки режиму CARET ---
+
+        } else if (input_mode == SCROLL) {
+            // --- Початок логіки режиму SCROLL (надсилання СКРОЛУ) ---
+            data->scroll_delta_x += x;
+            data->scroll_delta_y += y;
+            if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
+                input_report_rel(dev, INPUT_REL_WHEEL,
+                                 data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
+                                 true, K_FOREVER);
+                data->scroll_delta_x = 0; // Скидаємо обидві дельти після вертикального скролу
+                data->scroll_delta_y = 0;
+            } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
+                input_report_rel(dev, INPUT_REL_HWHEEL,
+                                 data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
+                                 true, K_FOREVER);
+                data->scroll_delta_x = 0; // Скидаємо обидві дельти після горизонтального скролу
+                data->scroll_delta_y = 0;
+            }
+            // --- Кінець логіки режиму SCROLL ---
+
+        } else { // Це режими MOVE або SNIPE (надсилання МИШІ input_report_rel)
+            // --- Початок логіки режимів MOVE/SNIPE ---
+             input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
+             input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+            // --- Кінець логіки режимів MOVE/SNIPE ---
         }
-    }
+#else // Якщо підтримка ендпоінтів ВИМКНЕНА, режим CARET_MODE не підтримується
+        if (input_mode == SCROLL) {
+            // --- Початок логіки режиму SCROLL ---
+           data->scroll_delta_x += x;
+           data->scroll_delta_y += y;
+           if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
+                 input_report_rel(dev, INPUT_REL_WHEEL, data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE, true, K_FOREVER);
+                 data->scroll_delta_x = 0; data->scroll_delta_y = 0;
+            } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
+                 input_report_rel(dev, INPUT_REL_HWHEEL, data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE, true, K_FOREVER);
+                 data->scroll_delta_x = 0; data->scroll_delta_y = 0;
+            }
+            // --- Кінець логіки режиму SCROLL ---
 
+        } else { // Це режими MOVE або SNIPE
+            // --- Початок логіки режимів MOVE/SNIPE ---
+            input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
+            input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
+            // --- Кінець логіки режимів MOVE/SNIPE ---
+        }
+#endif // IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS)
+    }
     // ... (решта коду функції) ...
     return err; // Повертаємо помилку
 }
