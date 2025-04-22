@@ -18,7 +18,6 @@ extern "C" {
 enum pixart_input_mode { MOVE = 0, SCROLL, SNIPE, CARET };
 
 /* device data structure */
-/* device data structure */
 struct pixart_data {
     const struct device *dev;
 
@@ -26,9 +25,8 @@ struct pixart_data {
     uint32_t curr_cpi;
     int32_t scroll_delta_x;
     int32_t scroll_delta_y;
-    // Додайте наступні два рядки:
-    int32_t caret_delta_x;
-    int32_t caret_delta_y;
+    int32_t caret_delta_x; // Поле для режиму CARET
+    int32_t caret_delta_y; // Поле для режиму CARET
 
 #ifdef CONFIG_PMW3610_POLLING_RATE_125_SW
     int64_t last_poll_time;
@@ -50,25 +48,8 @@ struct pixart_data {
 
     // for pmw3610 smart algorithm
     bool sw_smart_flag;
-};
+}; // <= Ось тут закінчується єдине визначення struct pixart_data
 
-    // motion interrupt isr
-    struct gpio_callback irq_gpio_cb;
-    // the work structure holding the trigger job
-    struct k_work trigger_work;
-
-    // the work structure for delayable init steps
-    struct k_work_delayable init_work;
-    int async_init_step;
-
-    //
-    bool ready;           // whether init is finished successfully
-    bool last_read_burst; // todo: needed?
-    int err;              // error code during async init
-
-    // for pmw3610 smart algorithm
-    bool sw_smart_flag;
-};
 
 // device config data structure
 struct pixart_config {
@@ -79,9 +60,8 @@ struct pixart_config {
     int32_t *scroll_layers;
     size_t snipe_layers_len;
     int32_t *snipe_layers;
-    // Додайте наступні два рядки:
-    size_t caret_layers_len;
-    int32_t *caret_layers;
+    size_t caret_layers_len; // Поле для режимів CARET
+    int32_t *caret_layers;  // Поле для режимів CARET
 };
 
 #ifdef __cplusplus
