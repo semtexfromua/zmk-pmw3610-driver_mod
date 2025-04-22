@@ -755,7 +755,6 @@ static int pmw3610_report_data(const struct device *dev) {
         } // Кінець if (input_mode == CARET_MODE)
         // Решта if-else if-else структури залишається без змін
         // ...
-#endif // Кінець #if IS_ENABLED(...)
         } else if (input_mode == SCROLL) {
             // --- Початок логіки режиму SCROLL (надсилання СКРОЛУ) ---
             data->scroll_delta_x += x;
