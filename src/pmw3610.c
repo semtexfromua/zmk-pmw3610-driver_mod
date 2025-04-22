@@ -573,7 +573,7 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
     // Додаємо перевірку для caret-шарів
     for (size_t i = 0; i < config->caret_layers_len; i++) {
         if (curr_layer == config->caret_layers[i]) {
-            return CARET_MODE_MODE; // Повертаємо новий режим CARET_MODE
+            return CARET_MODE; // Повертаємо новий режим CARET_MODE
         }
     }
 
@@ -608,7 +608,7 @@ static int pmw3610_report_data(const struct device *dev) {
 
     // Якщо режим змінився на CARET_MODE, скидаємо накопичені дельти інших режимів
     if (input_mode_changed) {
-        if (input_mode == CARET_MODE_MODE) {
+        if (input_mode == CARET_MODE) {
              // Тут ми будемо скидати дельти Scroll, якщо вони були
              data->scroll_delta_x = 0;
              data->scroll_delta_y = 0;
