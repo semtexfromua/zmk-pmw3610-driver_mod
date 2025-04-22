@@ -53,7 +53,16 @@ config PMW3610_SCROLL_TICK
     int "PMW3610's required ticks to produce a scroll report"
     default 20
     help
-      Scroll tick value.
+      Scroll tick value. [cite: 253]
+
+# Додайте наступну опцію для чутливості режиму CARET
+config PMW3610_CARET_TICK
+    int "PMW3610's required ticks to produce a caret key report"
+    default 10 # Можна встановити інше значення за замовчуванням, наприклад 10 або 15
+    help
+      Caret tick value. The amount of accumulated movement (delta) needed
+      to trigger a single cursor key press. Smaller value means higher
+      sensitivity.
 
 choice
     prompt "Select PMW3610's polling rate"
