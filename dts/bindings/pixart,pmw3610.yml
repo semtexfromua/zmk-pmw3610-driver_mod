@@ -18,3 +18,7 @@ properties:
   automouse-layer:
     type: int
     default: -1
+  # Додайте наступні рядки:
+  caret-layers:
+    type: array
+    default: []
