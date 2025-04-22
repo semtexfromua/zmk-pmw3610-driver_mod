@@ -10,6 +10,7 @@ menuconfig PMW3610
   select SPI # Ця залежність вже є
   select INPUT # Додайте залежність від підсистеми Input
   select ZMK_HID # Додайте залежність від підсистеми ZMK_HID
+  select ZMK_HID_REPORT_ENDPOINTS
     help
       Enable PMW3610 mouse optical sensor.
 
