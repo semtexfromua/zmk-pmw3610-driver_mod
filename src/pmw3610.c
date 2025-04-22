@@ -743,8 +743,8 @@ static int pmw3610_report_data(const struct device *dev) {
             data->caret_delta_y += y;
 
             // Перевіряємо поріг для руху по Y (вгору/вниз -> KC_UP/KC_DOWN)
-            // Використовуємо CONFIG_PMW3610_CARET_MODE_TICK, який додамо пізніше
-            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_MODE_TICK) {
+            // Використовуємо CONFIG_PMW3610_CARET_TICK, який додамо пізніше
+            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) {
                 // Визначаємо напрямок і надсилаємо подію клавіші
                 if (data->caret_delta_y > 0) { // Рух вниз
                      // Надсилаємо натискання KC_DOWN
@@ -767,7 +767,7 @@ static int pmw3610_report_data(const struct device *dev) {
                 data->caret_delta_y = 0; // Скидаємо дельту по Y після спрацювання
                 data->caret_delta_x = 0; // Можливо, скидати X теж, щоб не спрацював одночасно
 
-            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_MODE_TICK) {
+            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) {
                  // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
                 if (data->caret_delta_x > 0) { // Рух вправо
                      // Надсилаємо натискання KC_RIGHT
