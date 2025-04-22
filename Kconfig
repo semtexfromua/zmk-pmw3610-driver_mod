@@ -7,7 +7,9 @@
 
 menuconfig PMW3610
     bool "PMW3610 mouse optical sensor"
-  select SPI
+  select SPI # Ця залежність вже є
+  select INPUT # Додайте залежність від підсистеми Input
+  select ZMK_HID # Додайте залежність від підсистеми ZMK_HID
     help
       Enable PMW3610 mouse optical sensor.
 
