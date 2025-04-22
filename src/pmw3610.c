@@ -641,22 +641,24 @@ static int pmw3610_report_data(const struct device *dev) {
         break;
 
     // Додаємо новий кейс для режиму CARET_MODE:
-    case CARET_MODE:
-        // В режимі CARET_MODE ми, ймовірно, захочемо використовувати CPI,
-        // що підходить для точного переміщення, можливо, стандартний
-        // або окремо конфігурований. Почнемо зі стандартного.
-        set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
-        dividor = 1; // Або інший дільник, якщо потрібне масштабування
+#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
+        case CARET_MODE: // Переконайтеся, що використовуєте CARET_MODE, як ми вирішили раніше
+            // В режимі CARET ми, ймовірно, захочемо використовувати CPI,
+            // що підходить для точного переміщення, можливо, стандартний
+            // або окремо конфігурований. Почнемо зі стандартного.
+            set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
+            int32_t dividor = 1; // Або інший дільник, якщо потрібне масштабування
 
-        // Якщо режим тільки-но змінився на CARET_MODE, скидаємо накопичені дельти CARET_MODE
-        if (input_mode_changed) {
-             data->caret_delta_x = 0;
-             data->caret_delta_y = 0;
-        }
-        break; // <-- Обов'язково додайте break!
+            // Якщо режим тільки-но змінився на CARET, скидаємо накопичені дельти CARET
+            if (input_mode_changed) {
+                 data->caret_delta_x = 0;
+                 data->caret_delta_y = 0;
+            }
+            break; // <-- Обов'язково додайте break!
+#endif // IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
 
-    default:
-        return -ENOTSUP;
+        default:
+            return -ENOTSUP;
     }
 
     data->curr_mode = input_mode;
@@ -737,28 +739,22 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-        // Якщо поточний режим CARET_MODE
-        if (input_mode == CARET_MODE) {
+        // Якщо поточний режим CARET
+#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
+        if (input_mode == CARET_MODE) { // Переконайтеся, що використовуєте CARET_MODE
             data->caret_delta_x += x; // Накопичуємо дельту
             data->caret_delta_y += y;
 
             // Перевіряємо поріг для руху по Y (вгору/вниз -> KC_UP/KC_DOWN)
-            // Використовуємо CONFIG_PMW3610_CARET_TICK, який додамо пізніше
-            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) {
+            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) { // Переконайтеся, що тут CONFIG_PMW3610_CARET_TICK
                 // Визначаємо напрямок і надсилаємо подію клавіші
                 if (data->caret_delta_y > 0) { // Рух вниз
-                     // Надсилаємо натискання KC_DOWN
-                     // input_event_send_key(ZMK_HID_USAGE(HID_USAGE_GD, HID_USAGE_GD_KEYBOARD), HID_USAGE_KEY, <ваш_код_KC_DOWN>, true);
-                     // Надсилаємо відпускання KC_DOWN
-                     // input_event_send_key(ZMK_HID_USAGE(HID_USAGE_GD, HID_USAGE_GD_KEYBOARD), HID_USAGE_KEY, <ваш_код_KC_DOWN>, false);
-                     // Або простіше: надсилаємо пару press + release одразу
                      zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_DOWN_ARROW); // Zephyr HID usage
                      zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
                      k_msleep(1); // Можливо, потрібна дуже коротка затримка
                      zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
 
                 } else { // Рух вгору
-                     // Надсилаємо натискання KC_UP
                      zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_UP_ARROW); // Zephyr HID usage
                      zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
                      k_msleep(1); // Можливо, потрібна дуже коротка затримка
@@ -767,16 +763,14 @@ static int pmw3610_report_data(const struct device *dev) {
                 data->caret_delta_y = 0; // Скидаємо дельту по Y після спрацювання
                 data->caret_delta_x = 0; // Можливо, скидати X теж, щоб не спрацював одночасно
 
-            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) {
+            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) { // Переконайтеся, що тут CONFIG_PMW3610_CARET_TICK
                  // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
                 if (data->caret_delta_x > 0) { // Рух вправо
-                     // Надсилаємо натискання KC_RIGHT
                      zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Zephyr HID usage
                      zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
                      k_msleep(1); // Можливо, потрібна дуже коротка затримка
                      zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
                 } else { // Рух вліво
-                     // Надсилаємо натискання KC_LEFT
                      zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_LEFT_ARROW); // Zephyr HID usage
                      zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
                      k_msleep(1); // Можливо, потрібна дуже коротка затримка
@@ -786,35 +780,34 @@ static int pmw3610_report_data(const struct device *dev) {
                 data->caret_delta_y = 0; // Можливо, скидати Y теж
             }
 
-        } else { // Існуюча логіка для режимів MOVE, SCROLL, SNIPE
+        } else // <--- Тут потрібен else, щоб відділити логіку CARET_MODE від іншої
+#endif // IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
+        { // Існуюча логіка для режимів MOVE, SCROLL, SNIPE (цей блок має бути після #endif)
             if (input_mode != SCROLL) {
                 input_report_rel(dev, INPUT_REL_X, x, false, K_FOREVER);
                 input_report_rel(dev, INPUT_REL_Y, y, true, K_FOREVER);
-            } else { // Логіка скролу (вже була)
-                data->scroll_delta_x += x;
-                data->scroll_delta_y += y;
-                if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
-                    input_report_rel(dev, INPUT_REL_WHEEL,
-                                     data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
-                                     true, K_FOREVER);
-                    data->scroll_delta_x = 0; // Скидаємо обидві дельти після вертикального скролу
-                    data->scroll_delta_y = 0;
-                } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
-                    input_report_rel(dev, INPUT_REL_HWHEEL,
-                                     data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
-                                     true, K_FOREVER);
-                    data->scroll_delta_x = 0; // Скидаємо обидві дельти після горизонтального скролу
-                    data->scroll_delta_y = 0;
-                }
+            } else { // Логіка скролу
+               data->scroll_delta_x += x;
+               data->scroll_delta_y += y;
+               if (abs(data->scroll_delta_y) > CONFIG_PMW3610_SCROLL_TICK) {
+                   input_report_rel(dev, INPUT_REL_WHEEL,
+                                    data->scroll_delta_y > 0 ? PMW3610_SCROLL_Y_NEGATIVE : PMW3610_SCROLL_Y_POSITIVE,
+                                    true, K_FOREVER);
+                   data->scroll_delta_x = 0;
+                   data->scroll_delta_y = 0;
+               } else if (abs(data->scroll_delta_x) > CONFIG_PMW3610_SCROLL_TICK) {
+                   input_report_rel(dev, INPUT_REL_HWHEEL,
+                                    data->scroll_delta_x > 0 ? PMW3610_SCROLL_X_NEGATIVE : PMW3610_SCROLL_X_POSITIVE,
+                                    true, K_FOREVER);
+                   data->scroll_delta_x = 0;
+                   data->scroll_delta_y = 0;
+               }
             }
         }
     }
 
-    // ... (решта коду функції)
+    // ... (решта коду функції) ...
     return err; // Повертаємо помилку
-}
-
-    return err;
 }
 
 static void pmw3610_gpio_callback(const struct device *gpiob, struct gpio_callback *cb,
