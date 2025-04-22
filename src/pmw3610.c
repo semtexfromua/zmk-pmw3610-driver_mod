@@ -564,16 +564,28 @@ K_TIMER_DEFINE(automouse_layer_timer, deactivate_automouse_layer, NULL);
 static enum pixart_input_mode get_input_mode_for_current_layer(const struct device *dev) {
     const struct pixart_config *config = dev->config;
     uint8_t curr_layer = zmk_keymap_highest_layer_active();
+
+    // Додаємо перевірку для caret-шарів
+    for (size_t i = 0; i < config->caret_layers_len; i++) {
+        if (curr_layer == config->caret_layers[i]) {
+            return CARET; // Повертаємо новий режим CARET
+        }
+    }
+
+    // Існуюча перевірка для scroll-шарів
     for (size_t i = 0; i < config->scroll_layers_len; i++) {
         if (curr_layer == config->scroll_layers[i]) {
             return SCROLL;
         }
     }
+    // Існуюча перевірка для snipe-шарів
     for (size_t i = 0; i < config->snipe_layers_len; i++) {
         if (curr_layer == config->snipe_layers[i]) {
             return SNIPE;
         }
     }
+
+    // Якщо жоден зі спеціальних шарів не активний, повертаємо базовий режим MOVE
     return MOVE;
 }
 
@@ -815,6 +827,9 @@ static int pmw3610_init(const struct device *dev) {
     static struct pixart_data data##n;                                                             \
     static int32_t scroll_layers##n[] = DT_PROP(DT_DRV_INST(n), scroll_layers);                    \
     static int32_t snipe_layers##n[] = DT_PROP(DT_DRV_INST(n), snipe_layers);                      \
+    /* Додаємо оголошення масиву для caret-шарів */                                                \
+    static int32_t caret_layers##n[] = DT_PROP(DT_DRV_INST(n), caret_layers);                      \
+                                                                                                   \
     static const struct pixart_config config##n = {                                                \
         .irq_gpio = GPIO_DT_SPEC_INST_GET(n, irq_gpios),                                           \
         .bus =                                                                                     \
@@ -833,6 +848,9 @@ static int pmw3610_init(const struct device *dev) {
         .scroll_layers_len = DT_PROP_LEN(DT_DRV_INST(n), scroll_layers),                           \
         .snipe_layers = snipe_layers##n,                                                           \
         .snipe_layers_len = DT_PROP_LEN(DT_DRV_INST(n), snipe_layers),                             \
+        /* Додаємо ініціалізацію полів caret-шарів у структуру конфігурації */                     \
+        .caret_layers = caret_layers##n,                                                           \
+        .caret_layers_len = DT_PROP_LEN(DT_DRV_INST(n), caret_layers),                             \
     };                                                                                             \
                                                                                                    \
     DEVICE_DT_INST_DEFINE(n, pmw3610_init, NULL, &data##n, &config##n, POST_KERNEL,                \
