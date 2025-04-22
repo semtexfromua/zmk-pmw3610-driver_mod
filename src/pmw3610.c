@@ -573,7 +573,7 @@ static enum pixart_input_mode get_input_mode_for_current_layer(const struct devi
     // Додаємо перевірку для caret-шарів
     for (size_t i = 0; i < config->caret_layers_len; i++) {
         if (curr_layer == config->caret_layers[i]) {
-            return CARET; // Повертаємо новий режим CARET
+            return CARET_MODE_MODE; // Повертаємо новий режим CARET_MODE
         }
     }
 
@@ -606,14 +606,14 @@ static int pmw3610_report_data(const struct device *dev) {
     enum pixart_input_mode input_mode = get_input_mode_for_current_layer(dev);
     bool input_mode_changed = data->curr_mode != input_mode;
 
-    // Якщо режим змінився на CARET, скидаємо накопичені дельти інших режимів
+    // Якщо режим змінився на CARET_MODE, скидаємо накопичені дельти інших режимів
     if (input_mode_changed) {
-        if (input_mode == CARET) {
+        if (input_mode == CARET_MODE_MODE) {
              // Тут ми будемо скидати дельти Scroll, якщо вони були
              data->scroll_delta_x = 0;
              data->scroll_delta_y = 0;
-        } else if (data->curr_mode == CARET) {
-             // Якщо ми виходимо з режиму CARET, скидаємо його дельти
+        } else if (data->curr_mode == CARET_MODE) {
+             // Якщо ми виходимо з режиму CARET_MODE, скидаємо його дельти
              data->caret_delta_x = 0;
              data->caret_delta_y = 0;
         }
@@ -640,15 +640,15 @@ static int pmw3610_report_data(const struct device *dev) {
         dividor = CONFIG_PMW3610_SNIPE_CPI_DIVIDOR;
         break;
 
-    // Додаємо новий кейс для режиму CARET:
-    case CARET:
-        // В режимі CARET ми, ймовірно, захочемо використовувати CPI,
+    // Додаємо новий кейс для режиму CARET_MODE:
+    case CARET_MODE:
+        // В режимі CARET_MODE ми, ймовірно, захочемо використовувати CPI,
         // що підходить для точного переміщення, можливо, стандартний
         // або окремо конфігурований. Почнемо зі стандартного.
         set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
         dividor = 1; // Або інший дільник, якщо потрібне масштабування
 
-        // Якщо режим тільки-но змінився на CARET, скидаємо накопичені дельти CARET
+        // Якщо режим тільки-но змінився на CARET_MODE, скидаємо накопичені дельти CARET_MODE
         if (input_mode_changed) {
              data->caret_delta_x = 0;
              data->caret_delta_y = 0;
@@ -737,14 +737,14 @@ static int pmw3610_report_data(const struct device *dev) {
 #endif
 
     if (x != 0 || y != 0) {
-        // Якщо поточний режим CARET
-        if (input_mode == CARET) {
+        // Якщо поточний режим CARET_MODE
+        if (input_mode == CARET_MODE) {
             data->caret_delta_x += x; // Накопичуємо дельту
             data->caret_delta_y += y;
 
             // Перевіряємо поріг для руху по Y (вгору/вниз -> KC_UP/KC_DOWN)
-            // Використовуємо CONFIG_PMW3610_CARET_TICK, який додамо пізніше
-            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) {
+            // Використовуємо CONFIG_PMW3610_CARET_MODE_TICK, який додамо пізніше
+            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_MODE_TICK) {
                 // Визначаємо напрямок і надсилаємо подію клавіші
                 if (data->caret_delta_y > 0) { // Рух вниз
                      // Надсилаємо натискання KC_DOWN
@@ -767,7 +767,7 @@ static int pmw3610_report_data(const struct device *dev) {
                 data->caret_delta_y = 0; // Скидаємо дельту по Y після спрацювання
                 data->caret_delta_x = 0; // Можливо, скидати X теж, щоб не спрацював одночасно
 
-            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) {
+            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_MODE_TICK) {
                  // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
                 if (data->caret_delta_x > 0) { // Рух вправо
                      // Надсилаємо натискання KC_RIGHT
