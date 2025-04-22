@@ -740,36 +740,22 @@ static int pmw3610_report_data(const struct device *dev) {
 
     if (x != 0 || y != 0) {
         // Перевіряємо поточний режим і надсилаємо відповідні звіти
-#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // Якщо підтримка ендпоінтів увімкнена
+#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS)
         if (input_mode == CARET_MODE) {
-            // --- Початок логіки режиму CARET (надсилання КЛАВІШ) ---
-            data->caret_delta_x += x; // Накопичуємо дельту
-            data->caret_delta_y += y;
-
-            // Перевіряємо поріг для руху по Y (вгору/вниз -> KC_UP/KC_DOWN)
-            if (abs(data->caret_delta_y) > CONFIG_PMW3610_CARET_TICK) { // Переконайтеся, що тут CONFIG_PMW3610_CARET_TICK
-                // Визначаємо напрямок і надсилаємо подію клавіші
-                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(data->caret_delta_y > 0 ? HID_USAGE_KEY_KEYBOARD_DOWN_ARROW : HID_USAGE_KEY_KEYBOARD_UP_ARROW);
-                zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
-
-                data->caret_delta_y = 0; // Скидаємо дельту по Y після спрацювання
-                data->caret_delta_x = 0; // Скидаємо X теж, щоб не спрацював одночасно
-
-            } else if (abs(data->caret_delta_x) > CONFIG_PMW3610_CARET_TICK) { // Перевіряємо поріг для руху по X (вліво/вправо -> KC_LEFT/KC_RIGHT)
-                 // Визначаємо напрямок і надсилаємо подію клавіші
-                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(data->caret_delta_x > 0 ? HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW : HID_USAGE_KEY_KEYBOARD_LEFT_ARROW);
-                zmk_endpoints_send_key_report(&usage, 1, true, 0); // Надсилаємо натискання
-                k_msleep(1); // Можливо, потрібна дуже коротка затримка
-                zmk_endpoints_send_key_report(&usage, 1, false, 0); // Надсилаємо відпускання
-
-                data->caret_delta_x = 0; // Скидаємо дельту по X після спрацювання
-                data->caret_delta_y = 0; // Скидаємо Y теж
-
+            // --- СПРОЩЕНА ЛОГІКА ТЕСТУ: Надсилаємо KC_RIGHT при будь-якому русі ---
+            // Перевіряємо, чи був взагалі якийсь рух
+            if (x != 0 || y != 0) {
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Використовуємо HID usage для стрілки вправо (KC_RIGHT)
+                // Надсилаємо один звіт про натискання клавіші.
+                // Без накопичення дельт, порогів, затримок та відпускання.
+                zmk_endpoints_send_key_report(&usage, 1, true, 0); // 1 usage, press (true), report_id (0)
             }
-            // --- Кінець логіки режиму CARET ---
-
+            // Ця спрощена логіка не накопичує дельти і не перевіряє пороги.
+            // Вона просто тестує, чи можна взагалі відправити подію клавіші.
+        } // Кінець if (input_mode == CARET_MODE)
+        // Решта if-else if-else структури залишається без змін
+        // ...
+#endif // Кінець #if IS_ENABLED(...)
         } else if (input_mode == SCROLL) {
             // --- Початок логіки режиму SCROLL (надсилання СКРОЛУ) ---
             data->scroll_delta_x += x;
