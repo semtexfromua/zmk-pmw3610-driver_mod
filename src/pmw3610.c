@@ -744,12 +744,10 @@ static int pmw3610_report_data(const struct device *dev) {
         if (input_mode == CARET_MODE) {
             // --- СПРОЩЕНА ЛОГІКА ТЕСТУ: Надсилаємо KC_RIGHT при будь-якому русі ---
             // Перевіряємо, чи був взагалі якийсь рух
-            if (x != 0 || y != 0) {
-                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Використовуємо HID usage для стрілки вправо (KC_RIGHT)
+            zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Використовуємо HID usage для стрілки вправо (KC_RIGHT)
                 // Надсилаємо один звіт про натискання клавіші.
                 // Без накопичення дельт, порогів, затримок та відпускання.
-                zmk_endpoints_send_key_report(&usage, 1, true, 0); // 1 usage, press (true), report_id (0)
-            }
+            zmk_endpoints_send_key_report(&usage, 1, true, 0); // 1 usage, press (true), report_id (0)
             // Ця спрощена логіка не накопичує дельти і не перевіряє пороги.
             // Вона просто тестує, чи можна взагалі відправити подію клавіші.
         } // Кінець if (input_mode == CARET_MODE)
