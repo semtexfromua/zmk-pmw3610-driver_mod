@@ -641,21 +641,44 @@ static int pmw3610_report_data(const struct device *dev) {
         break;
 
     // Додаємо новий кейс для режиму CARET_MODE:
-#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
-        case CARET_MODE: // Переконайтеся, що використовуєте CARET_MODE, як ми вирішили раніше
-            // В режимі CARET ми, ймовірно, захочемо використовувати CPI,
-            // що підходить для точного переміщення, можливо, стандартний
-            // або окремо конфігурований. Почнемо зі стандартного.
-            set_cpi_if_needed(dev, CONFIG_PMW3610_CPI);
-            int32_t dividor = 1; // Або інший дільник, якщо потрібне масштабування
+#if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS)
+        case CARET_MODE:
+            // --- Реалізація CARET-режиму ---
+            // Накопичуємо дельти
+            data->caret_delta_x += x;
+            data->caret_delta_y += y;
 
-            // Якщо режим тільки-но змінився на CARET, скидаємо накопичені дельти CARET
-            if (input_mode_changed) {
-                 data->caret_delta_x = 0;
-                 data->caret_delta_y = 0;
+            // Порогове значення для спрацьовування
+            const int caret_tick = CONFIG_PMW3610_CARET_TICK;
+
+            // Відправляємо стрілки по X
+            while (data->caret_delta_x >= caret_tick) {
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0);
+                zmk_endpoints_send_key_report(&usage, 1, false, 0);
+                data->caret_delta_x -= caret_tick;
             }
-            break; // <-- Обов'язково додайте break!
-#endif // IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS) // <--- Додайте цей рядок
+            while (data->caret_delta_x <= -caret_tick) {
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_LEFT_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0);
+                zmk_endpoints_send_key_report(&usage, 1, false, 0);
+                data->caret_delta_x += caret_tick;
+            }
+            // Відправляємо стрілки по Y
+            while (data->caret_delta_y >= caret_tick) {
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_DOWN_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0);
+                zmk_endpoints_send_key_report(&usage, 1, false, 0);
+                data->caret_delta_y -= caret_tick;
+            }
+            while (data->caret_delta_y <= -caret_tick) {
+                zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_UP_ARROW);
+                zmk_endpoints_send_key_report(&usage, 1, true, 0);
+                zmk_endpoints_send_key_report(&usage, 1, false, 0);
+                data->caret_delta_y += caret_tick;
+            }
+            break;
+#endif
 
         default:
             return -ENOTSUP;
@@ -741,19 +764,7 @@ static int pmw3610_report_data(const struct device *dev) {
     if (x != 0 || y != 0) {
         // Перевіряємо поточний режим і надсилаємо відповідні звіти
 #if IS_ENABLED(CONFIG_ZMK_HID_REPORT_ENDPOINTS)
-        if (input_mode == CARET_MODE) {
-            // --- СПРОЩЕНА ЛОГІКА ТЕСТУ: Надсилаємо KC_RIGHT при будь-якому русі ---
-            // Перевіряємо, чи був взагалі якийсь рух
-            zmk_hid_usage_t usage = ZMK_HID_USAGE_KEY(HID_USAGE_KEY_KEYBOARD_RIGHT_ARROW); // Використовуємо HID usage для стрілки вправо (KC_RIGHT)
-                // Надсилаємо один звіт про натискання клавіші.
-                // Без накопичення дельт, порогів, затримок та відпускання.
-            zmk_endpoints_send_key_report(&usage, 1, true, 0); // 1 usage, press (true), report_id (0)
-            // Ця спрощена логіка не накопичує дельти і не перевіряє пороги.
-            // Вона просто тестує, чи можна взагалі відправити подію клавіші.
-        } // Кінець if (input_mode == CARET_MODE)
-        // Решта if-else if-else структури залишається без змін
-        // ...
-        } else if (input_mode == SCROLL) {
+        if (input_mode == SCROLL) {
             // --- Початок логіки режиму SCROLL (надсилання СКРОЛУ) ---
             data->scroll_delta_x += x;
             data->scroll_delta_y += y;
